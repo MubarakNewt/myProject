@@ -1,78 +1,48 @@
 import React, { useState } from 'react';
 import { Heart, User, Activity, Stethoscope, TrendingUp, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
-interface PatientData {
-  age: number;
-  sex: 'male' | 'female' | '';
-  chestPainType: 'typical' | 'atypical' | 'non-anginal' | 'asymptomatic' | '';
-  restingBP: number;
-  cholesterol: number;
-  fastingBS: 'yes' | 'no' | '';
-  restingECG: 'normal' | 'st-t-abnormality' | 'lv-hypertrophy' | '';
-  maxHeartRate: number;
-  exerciseAngina: 'yes' | 'no' | '';
-  oldpeak: number;
-  stSlope: 'upsloping' | 'flat' | 'downsloping' | '';
-  majorVessels: 0 | 1 | 2 | 3 | null;
-  thalassemia: 'normal' | 'fixed-defect' | 'reversible-defect' | '';
-}
-
-interface PredictionResult {
-  riskLevel: 'low' | 'moderate' | 'high';
-  probability: number;
-  confidence: number;
-  recommendations: string[];
-}
-
 function App() {
-  const [currentStep, setCurrentStep] = useState<'input' | 'processing' | 'results'>('input');
-  const [patientData, setPatientData] = useState<PatientData>({
-    age: 0,
+  const [currentStep, setCurrentStep] = useState('input');
+  const [patientData, setPatientData] = useState({
+    age: '',
     sex: '',
     chestPainType: '',
-    restingBP: 0,
-    cholesterol: 0,
+    restingBP: '',
+    cholesterol: '',
     fastingBS: '',
     restingECG: '',
-    maxHeartRate: 0,
+    maxHeartRate: '',
     exerciseAngina: '',
-    oldpeak: 0,
+    oldpeak: '',
     stSlope: '',
-    majorVessels: null,
+    majorVessels: '',
     thalassemia: ''
   });
-  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [prediction, setPrediction] = useState(null);
   const [processingProgress, setProcessingProgress] = useState(0);
 
-  const updateField = (field: keyof PatientData, value: any) => {
+  const updateField = (field, value) => {
     setPatientData(prev => ({ ...prev, [field]: value }));
   };
 
   const isFormValid = () => {
-    return Object.entries(patientData).every(([key, value]) => {
-      if (key === 'majorVessels') return value !== null;
-      return value !== '' && value !== 0;
-    });
+    return Object.entries(patientData).every(([key, value]) => value !== '');
   };
 
   const simulatePrediction = () => {
     setCurrentStep('processing');
     setProcessingProgress(0);
-
     const interval = setInterval(() => {
       setProcessingProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
-          
-          // Simulate ML prediction based on input data
           const riskFactors = calculateRiskFactors();
-          const mockPrediction: PredictionResult = {
+          const mockPrediction = {
             riskLevel: riskFactors > 0.6 ? 'high' : riskFactors > 0.3 ? 'moderate' : 'low',
             probability: Math.min(0.95, Math.max(0.05, riskFactors + (Math.random() - 0.5) * 0.2)),
             confidence: 0.85 + Math.random() * 0.1,
             recommendations: generateRecommendations(riskFactors)
           };
-          
           setPrediction(mockPrediction);
           setCurrentStep('results');
           return 100;
@@ -82,46 +52,32 @@ function App() {
     }, 150);
   };
 
-  const calculateRiskFactors = (): number => {
+  const calculateRiskFactors = () => {
     let risk = 0;
-    
-    // Age factor
-    if (patientData.age > 65) risk += 0.2;
-    else if (patientData.age > 55) risk += 0.1;
-    
-    // Gender factor
+    const age = Number(patientData.age);
+    const restingBP = Number(patientData.restingBP);
+    const cholesterol = Number(patientData.cholesterol);
+    const majorVessels = Number(patientData.majorVessels);
+    if (age > 65) risk += 0.2;
+    else if (age > 55) risk += 0.1;
     if (patientData.sex === 'male') risk += 0.1;
-    
-    // Chest pain type
     if (patientData.chestPainType === 'typical') risk += 0.3;
     else if (patientData.chestPainType === 'atypical') risk += 0.2;
-    
-    // Blood pressure
-    if (patientData.restingBP > 140) risk += 0.15;
-    else if (patientData.restingBP > 120) risk += 0.05;
-    
-    // Cholesterol
-    if (patientData.cholesterol > 240) risk += 0.2;
-    else if (patientData.cholesterol > 200) risk += 0.1;
-    
-    // Exercise angina
+    if (restingBP > 140) risk += 0.15;
+    else if (restingBP > 120) risk += 0.05;
+    if (cholesterol > 240) risk += 0.2;
+    else if (cholesterol > 200) risk += 0.1;
     if (patientData.exerciseAngina === 'yes') risk += 0.25;
-    
-    // Major vessels
-    if (patientData.majorVessels && patientData.majorVessels > 0) {
-      risk += patientData.majorVessels * 0.15;
+    if (!isNaN(majorVessels) && majorVessels > 0) {
+      risk += majorVessels * 0.15;
     }
-    
-    // Thalassemia
     if (patientData.thalassemia === 'reversible-defect') risk += 0.3;
     else if (patientData.thalassemia === 'fixed-defect') risk += 0.2;
-    
     return Math.min(1, risk);
   };
 
-  const generateRecommendations = (riskLevel: number): string[] => {
+  const generateRecommendations = (riskLevel) => {
     const recommendations = [];
-    
     if (riskLevel > 0.6) {
       recommendations.push("Consult with a cardiologist immediately for comprehensive evaluation");
       recommendations.push("Consider cardiac stress testing and advanced imaging");
@@ -135,10 +91,8 @@ function App() {
       recommendations.push("Continue regular annual health screenings");
       recommendations.push("Stay physically active with at least 150 minutes of moderate exercise weekly");
     }
-    
     recommendations.push("Avoid smoking and limit alcohol consumption");
     recommendations.push("Manage stress through relaxation techniques or counseling");
-    
     return recommendations;
   };
 
@@ -147,97 +101,21 @@ function App() {
     setPrediction(null);
     setProcessingProgress(0);
     setPatientData({
-      age: 0,
+      age: '',
       sex: '',
       chestPainType: '',
-      restingBP: 0,
-      cholesterol: 0,
+      restingBP: '',
+      cholesterol: '',
       fastingBS: '',
       restingECG: '',
-      maxHeartRate: 0,
+      maxHeartRate: '',
       exerciseAngina: '',
-      oldpeak: 0,
+      oldpeak: '',
       stSlope: '',
-      majorVessels: null,
+      majorVessels: '',
       thalassemia: ''
     });
   };
-
-  const InputField = ({ 
-    label, 
-    type = 'text', 
-    value, 
-    onChange, 
-    options, 
-    unit,
-    info 
-  }: {
-    label: string;
-    type?: 'text' | 'number' | 'select';
-    value: any;
-    onChange: (value: any) => void;
-    options?: { value: any; label: string }[];
-    unit?: string;
-    info?: string;
-  }) => (
-    <div className="space-y-2">
-      <div className="flex items-center space-x-2">
-        <label className="block text-sm font-medium text-gray-700">{label}</label>
-        {info && (
-          <div className="group relative">
-            <Info className="h-4 w-4 text-gray-400 cursor-help" />
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-              {info}
-            </div>
-          </div>
-        )}
-      </div>
-      {type === 'select' ? (
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200"
-        >
-          <option value="">Select...</option>
-          {options?.map(option => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
-      ) : (
-        <div className="relative">
-          <input
-            type={type}
-            value={type === 'number' && value === 0 ? '' : value}
-            onChange={(e) => {
-              const inputValue = e.target.value;
-              if (type === 'number') {
-                // Handle empty input
-                if (inputValue === '') {
-                  onChange(0);
-                  return;
-                }
-                
-                // Only update if it's a valid number
-                const numValue = parseFloat(inputValue);
-                if (!isNaN(numValue) && numValue >= 0) {
-                  onChange(numValue);
-                }
-              } else {
-                onChange(inputValue);
-              }
-            }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            placeholder={`Enter ${label.toLowerCase()}`}
-          />
-          {unit && (
-            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-              {unit}
-            </span>
-          )}
-        </div>
-      )}
-    </div>
-  );
 
   if (currentStep === 'processing') {
     return (
@@ -250,7 +128,6 @@ function App() {
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Analyzing Your Data</h2>
             <p className="text-gray-600 mb-6">Our AI model is processing your information using advanced machine learning algorithms</p>
-            
             <div className="space-y-4">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Processing Progress</span>
@@ -262,7 +139,6 @@ function App() {
                   style={{ width: `${processingProgress}%` }}
                 />
               </div>
-              
               <div className="text-xs text-gray-500 space-y-1 mt-6">
                 <p>✓ Data preprocessing completed</p>
                 <p>✓ Feature engineering applied</p>
@@ -276,7 +152,7 @@ function App() {
   }
 
   if (currentStep === 'results' && prediction) {
-    const getRiskColor = (level: string) => {
+    const getRiskColor = (level) => {
       switch (level) {
         case 'low': return 'text-green-600 bg-green-50 border-green-200';
         case 'moderate': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
@@ -284,8 +160,7 @@ function App() {
         default: return 'text-gray-600 bg-gray-50 border-gray-200';
       }
     };
-
-    const getRiskIcon = (level: string) => {
+    const getRiskIcon = (level) => {
       switch (level) {
         case 'low': return <CheckCircle className="h-8 w-8" />;
         case 'moderate': return <AlertTriangle className="h-8 w-8" />;
@@ -293,19 +168,15 @@ function App() {
         default: return <Info className="h-8 w-8" />;
       }
     };
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
-            {/* Header */}
             <div className="text-center mb-8">
               <Heart className="h-12 w-12 text-red-500 mx-auto mb-4" />
               <h1 className="text-3xl font-bold text-gray-800 mb-2">Your Heart Health Assessment</h1>
               <p className="text-gray-600">Based on advanced machine learning analysis</p>
             </div>
-
-            {/* Risk Level Card */}
             <div className={`bg-white rounded-2xl shadow-xl border-2 p-8 mb-8 ${getRiskColor(prediction.riskLevel)}`}>
               <div className="flex items-center justify-center mb-6">
                 {getRiskIcon(prediction.riskLevel)}
@@ -314,7 +185,6 @@ function App() {
                   <p className="text-lg">{(prediction.probability * 100).toFixed(1)}% probability</p>
                 </div>
               </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="text-center">
                   <div className="text-3xl font-bold mb-2">{(prediction.probability * 100).toFixed(1)}%</div>
@@ -326,8 +196,6 @@ function App() {
                 </div>
               </div>
             </div>
-
-            {/* Recommendations */}
             <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
                 <Stethoscope className="h-6 w-6 mr-3 text-blue-600" />
@@ -344,8 +212,6 @@ function App() {
                 ))}
               </div>
             </div>
-
-            {/* Disclaimer */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8">
               <div className="flex items-start space-x-3">
                 <AlertTriangle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -359,8 +225,6 @@ function App() {
                 </div>
               </div>
             </div>
-
-            {/* Actions */}
             <div className="flex justify-center space-x-4">
               <button
                 onClick={resetAssessment}
@@ -385,7 +249,6 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
               <Heart className="h-16 w-16 text-red-500 mr-4" />
@@ -399,192 +262,186 @@ function App() {
               Fill out the form below with your medical information for an instant risk assessment.
             </p>
           </div>
-
-          {/* Form */}
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Basic Information */}
               <div className="md:col-span-2">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <User className="h-5 w-5 mr-2 text-blue-600" />
                   Basic Information
                 </h3>
               </div>
-              
-              <InputField
-                label="Age"
-                type="number"
-                value={patientData.age}
-                onChange={(value) => updateField('age', value)}
-                unit="years"
-                info="Your current age in years"
-              />
-              
-              <InputField
-                label="Sex"
-                type="select"
-                value={patientData.sex}
-                onChange={(value) => updateField('sex', value)}
-                options={[
-                  { value: 'male', label: 'Male' },
-                  { value: 'female', label: 'Female' }
-                ]}
-              />
-
-              {/* Symptoms & History */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Age</label>
+                <input
+                  type="number"
+                  value={patientData.age}
+                  onChange={e => updateField('age', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  placeholder="Enter age"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Sex</label>
+                <select
+                  value={patientData.sex}
+                  onChange={e => updateField('sex', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200"
+                >
+                  <option value="">Select...</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
               <div className="md:col-span-2 mt-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <Activity className="h-5 w-5 mr-2 text-blue-600" />
                   Symptoms & Medical History
                 </h3>
               </div>
-              
-              <InputField
-                label="Chest Pain Type"
-                type="select"
-                value={patientData.chestPainType}
-                onChange={(value) => updateField('chestPainType', value)}
-                options={[
-                  { value: 'typical', label: 'Typical Angina' },
-                  { value: 'atypical', label: 'Atypical Angina' },
-                  { value: 'non-anginal', label: 'Non-Anginal Pain' },
-                  { value: 'asymptomatic', label: 'Asymptomatic' }
-                ]}
-                info="Type of chest pain experienced"
-              />
-              
-              <InputField
-                label="Exercise Induced Angina"
-                type="select"
-                value={patientData.exerciseAngina}
-                onChange={(value) => updateField('exerciseAngina', value)}
-                options={[
-                  { value: 'yes', label: 'Yes' },
-                  { value: 'no', label: 'No' }
-                ]}
-                info="Do you experience chest pain during exercise?"
-              />
-
-              {/* Vital Signs */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Chest Pain Type</label>
+                <select
+                  value={patientData.chestPainType}
+                  onChange={e => updateField('chestPainType', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200"
+                >
+                  <option value="">Select...</option>
+                  <option value="typical">Typical Angina</option>
+                  <option value="atypical">Atypical Angina</option>
+                  <option value="non-anginal">Non-Anginal Pain</option>
+                  <option value="asymptomatic">Asymptomatic</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Exercise Induced Angina</label>
+                <select
+                  value={patientData.exerciseAngina}
+                  onChange={e => updateField('exerciseAngina', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200"
+                >
+                  <option value="">Select...</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
               <div className="md:col-span-2 mt-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
                   Vital Signs & Lab Results
                 </h3>
               </div>
-              
-              <InputField
-                label="Resting Blood Pressure"
-                type="number"
-                value={patientData.restingBP}
-                onChange={(value) => updateField('restingBP', value)}
-                unit="mmHg"
-                info="Blood pressure when at rest"
-              />
-              
-              <InputField
-                label="Cholesterol Level"
-                type="number"
-                value={patientData.cholesterol}
-                onChange={(value) => updateField('cholesterol', value)}
-                unit="mg/dl"
-                info="Serum cholesterol level"
-              />
-              
-              <InputField
-                label="Fasting Blood Sugar > 120 mg/dl"
-                type="select"
-                value={patientData.fastingBS}
-                onChange={(value) => updateField('fastingBS', value)}
-                options={[
-                  { value: 'yes', label: 'Yes' },
-                  { value: 'no', label: 'No' }
-                ]}
-                info="Is your fasting blood sugar greater than 120 mg/dl?"
-              />
-              
-              <InputField
-                label="Maximum Heart Rate Achieved"
-                type="number"
-                value={patientData.maxHeartRate}
-                onChange={(value) => updateField('maxHeartRate', value)}
-                unit="bpm"
-                info="Highest heart rate during exercise test"
-              />
-
-              {/* Clinical Tests */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Resting Blood Pressure</label>
+                <input
+                  type="number"
+                  value={patientData.restingBP}
+                  onChange={e => updateField('restingBP', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  placeholder="Enter resting blood pressure"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Cholesterol Level</label>
+                <input
+                  type="number"
+                  value={patientData.cholesterol}
+                  onChange={e => updateField('cholesterol', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  placeholder="Enter cholesterol level"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Fasting Blood Sugar &gt; 120 mg/dl</label>
+                <select
+                  value={patientData.fastingBS}
+                  onChange={e => updateField('fastingBS', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200"
+                >
+                  <option value="">Select...</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Maximum Heart Rate Achieved</label>
+                <input
+                  type="number"
+                  value={patientData.maxHeartRate}
+                  onChange={e => updateField('maxHeartRate', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  placeholder="Enter max heart rate"
+                />
+              </div>
               <div className="md:col-span-2 mt-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <Stethoscope className="h-5 w-5 mr-2 text-blue-600" />
                   Clinical Test Results
                 </h3>
               </div>
-              
-              <InputField
-                label="Resting ECG Results"
-                type="select"
-                value={patientData.restingECG}
-                onChange={(value) => updateField('restingECG', value)}
-                options={[
-                  { value: 'normal', label: 'Normal' },
-                  { value: 'st-t-abnormality', label: 'ST-T Wave Abnormality' },
-                  { value: 'lv-hypertrophy', label: 'Left Ventricular Hypertrophy' }
-                ]}
-                info="Results from resting electrocardiogram"
-              />
-              
-              <InputField
-                label="ST Depression (Oldpeak)"
-                type="number"
-                value={patientData.oldpeak}
-                onChange={(value) => updateField('oldpeak', value)}
-                unit="mm"
-                info="ST depression induced by exercise relative to rest"
-              />
-              
-              <InputField
-                label="ST Slope"
-                type="select"
-                value={patientData.stSlope}
-                onChange={(value) => updateField('stSlope', value)}
-                options={[
-                  { value: 'upsloping', label: 'Upsloping' },
-                  { value: 'flat', label: 'Flat' },
-                  { value: 'downsloping', label: 'Downsloping' }
-                ]}
-                info="Slope of the peak exercise ST segment"
-              />
-              
-              <InputField
-                label="Number of Major Vessels"
-                type="select"
-                value={patientData.majorVessels}
-                onChange={(value) => updateField('majorVessels', value === '' ? null : Number(value))}
-                options={[
-                  { value: 0, label: '0' },
-                  { value: 1, label: '1' },
-                  { value: 2, label: '2' },
-                  { value: 3, label: '3' }
-                ]}
-                info="Number of major vessels colored by fluoroscopy (0-3)"
-              />
-              
-              <InputField
-                label="Thalassemia"
-                type="select"
-                value={patientData.thalassemia}
-                onChange={(value) => updateField('thalassemia', value)}
-                options={[
-                  { value: 'normal', label: 'Normal' },
-                  { value: 'fixed-defect', label: 'Fixed Defect' },
-                  { value: 'reversible-defect', label: 'Reversible Defect' }
-                ]}
-                info="Thalassemia blood disorder test result"
-              />
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Resting ECG Results</label>
+                <select
+                  value={patientData.restingECG}
+                  onChange={e => updateField('restingECG', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200"
+                >
+                  <option value="">Select...</option>
+                  <option value="normal">Normal</option>
+                  <option value="st-t-abnormality">ST-T Wave Abnormality</option>
+                  <option value="lv-hypertrophy">Left Ventricular Hypertrophy</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">ST Depression (Oldpeak)</label>
+                <input
+                  type="number"
+                  value={patientData.oldpeak}
+                  onChange={e => updateField('oldpeak', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  placeholder="Enter ST depression (oldpeak)"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">ST Slope</label>
+                <select
+                  value={patientData.stSlope}
+                  onChange={e => updateField('stSlope', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200"
+                >
+                  <option value="">Select...</option>
+                  <option value="upsloping">Upsloping</option>
+                  <option value="flat">Flat</option>
+                  <option value="downsloping">Downsloping</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Number of Major Vessels</label>
+                <select
+                  value={patientData.majorVessels}
+                  onChange={e => updateField('majorVessels', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200"
+                >
+                  <option value="">Select...</option>
+                  <option value="0">0</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Thalassemia</label>
+                <select
+                  value={patientData.thalassemia}
+                  onChange={e => updateField('thalassemia', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200"
+                >
+                  <option value="">Select...</option>
+                  <option value="normal">Normal</option>
+                  <option value="fixed-defect">Fixed Defect</option>
+                  <option value="reversible-defect">Reversible Defect</option>
+                </select>
+              </div>
             </div>
-
-            {/* Submit Button */}
             <div className="mt-8 text-center">
               <button
                 onClick={simulatePrediction}
@@ -602,8 +459,6 @@ function App() {
               )}
             </div>
           </div>
-
-          {/* Footer Disclaimer */}
           <div className="text-center mt-8 text-gray-600">
             <p className="text-sm">
               This tool uses machine learning for educational purposes. Always consult healthcare professionals for medical advice.
