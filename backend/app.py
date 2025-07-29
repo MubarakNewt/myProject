@@ -3,13 +3,23 @@ from flask_cors import CORS
 import pandas as pd
 import numpy as np
 import joblib
+import os
 
 app = Flask(__name__)
 CORS(app, origins=["https://heart-disease-predictor-frontend.vercel.app"])
 
-model = joblib.load("model/model.pkl")
-pipeline = joblib.load("preprocess/pipeline.pkl")
-mi_indices = joblib.load("model/mi_indices.pkl")
+# ✅ Base directory: this guarantees paths work inside Docker
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# ✅ Robust relative paths
+MODEL_PATH = os.path.join(BASE_DIR, "model", "model.pkl")
+PIPELINE_PATH = os.path.join(BASE_DIR, "preprocess", "pipeline.pkl")
+MI_INDICES_PATH = os.path.join(BASE_DIR, "model", "mi_indices.pkl")
+
+# ✅ Load artifacts
+model = joblib.load(MODEL_PATH)
+pipeline = joblib.load(PIPELINE_PATH)
+mi_indices = joblib.load(MI_INDICES_PATH)
 
 @app.route("/")
 def home():
