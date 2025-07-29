@@ -119,23 +119,23 @@ function App() {
 
   if (currentStep === 'processing') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-2xl p-12 max-w-md w-full mx-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-indigo-200 to-purple-200 flex items-center justify-center">
+        <div className="bg-white rounded-3xl shadow-2xl border border-blue-100 p-12 max-w-md w-full mx-4">
           <div className="text-center">
             <div className="relative mb-8">
-              <Heart className="h-16 w-16 text-red-500 mx-auto animate-pulse" />
-              <div className="absolute inset-0 rounded-full border-4 border-blue-200 animate-spin" style={{ animationDuration: '2s' }} />
+              <Heart className="h-20 w-20 text-red-500 mx-auto animate-pulse drop-shadow-lg" />
+              <div className="absolute inset-0 rounded-full border-4 border-blue-300 animate-spin" style={{ animationDuration: '2s' }} />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Analyzing Your Data</h2>
-            <p className="text-gray-600 mb-6">Our AI model is processing your information using advanced machine learning algorithms</p>
+            <h2 className="text-3xl font-extrabold text-indigo-800 mb-4 tracking-tight">Analyzing Your Data</h2>
+            <p className="text-gray-700 mb-6">Our AI model is processing your information using advanced machine learning algorithms</p>
             <div className="space-y-4">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>Processing Progress</span>
                 <span>{Math.round(processingProgress)}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="w-full bg-gradient-to-r from-blue-200 to-purple-200 rounded-full h-3">
                 <div 
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300"
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300 shadow-md"
                   style={{ width: `${processingProgress}%` }}
                 />
               </div>
@@ -169,54 +169,54 @@ function App() {
       }
     };
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto px-4 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-indigo-200 to-purple-200">
+        <div className="container mx-auto px-4 py-10">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <Heart className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Your Heart Health Assessment</h1>
-              <p className="text-gray-600">Based on advanced machine learning analysis</p>
+            <div className="text-center mb-10">
+              <Heart className="h-16 w-16 text-red-500 mx-auto mb-4 drop-shadow-lg" />
+              <h1 className="text-4xl font-extrabold text-indigo-900 mb-2 tracking-tight">Your Heart Health Assessment</h1>
+              <p className="text-gray-700">Based on advanced machine learning analysis</p>
             </div>
-            <div className={`bg-white rounded-2xl shadow-xl border-2 p-8 mb-8 ${getRiskColor(prediction.riskLevel)}`}>
-              <div className="flex items-center justify-center mb-6">
+            <div className={`bg-white rounded-3xl shadow-2xl border-2 p-10 mb-10 ${getRiskColor(prediction.riskLevel)}`}> 
+              <div className="flex items-center justify-center mb-8">
                 {getRiskIcon(prediction.riskLevel)}
                 <div className="ml-4 text-center">
-                  <h2 className="text-2xl font-bold capitalize">{prediction.riskLevel} Risk</h2>
-                  <p className="text-lg">{(prediction.probability * 100).toFixed(1)}% probability</p>
+                  <h2 className="text-2xl font-extrabold capitalize tracking-wide">{prediction.riskLevel} Risk</h2>
+                  <p className="text-lg font-semibold">{(prediction.probability * 100).toFixed(1)}% probability</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold mb-2">{(prediction.probability * 100).toFixed(1)}%</div>
+                  <div className="text-4xl font-extrabold mb-2 text-blue-700">{(prediction.probability * 100).toFixed(1)}%</div>
                   <div className="text-sm opacity-75">Risk Probability</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold mb-2">{(prediction.confidence * 100).toFixed(1)}%</div>
+                  <div className="text-4xl font-extrabold mb-2 text-purple-700">{(prediction.confidence * 100).toFixed(1)}%</div>
                   <div className="text-sm opacity-75">Model Confidence</div>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+            <div className="bg-white rounded-3xl shadow-xl p-10 mb-10 border border-blue-100">
+              <h3 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
                 <Stethoscope className="h-6 w-6 mr-3 text-blue-600" />
                 Personalized Recommendations
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {prediction.recommendations.map((rec, index) => (
-                  <div key={index} className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  <div key={index} className="flex items-start space-x-3 p-5 bg-blue-50 rounded-xl shadow-sm hover:bg-blue-100 transition-colors">
+                    <div className="flex-shrink-0 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-base font-bold shadow-md">
                       {index + 1}
                     </div>
-                    <p className="text-gray-700">{rec}</p>
+                    <p className="text-gray-700 text-base font-medium">{rec}</p>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8">
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 mb-10 shadow-md">
               <div className="flex items-start space-x-3">
                 <AlertTriangle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-amber-800 mb-2">Important Medical Disclaimer</h4>
+                  <h4 className="font-semibold text-amber-800 mb-2 text-lg">Important Medical Disclaimer</h4>
                   <p className="text-amber-700 text-sm">
                     This assessment is for informational purposes only and should not replace professional medical advice. 
                     Always consult with qualified healthcare providers for proper diagnosis and treatment. 
@@ -225,16 +225,16 @@ function App() {
                 </div>
               </div>
             </div>
-            <div className="flex justify-center space-x-4">
+            <div className="flex justify-center space-x-6">
               <button
                 onClick={resetAssessment}
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-10 py-4 rounded-xl shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all font-semibold text-lg"
               >
                 Take Another Assessment
               </button>
               <button
                 onClick={() => window.print()}
-                className="bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                className="bg-gradient-to-r from-gray-600 to-gray-800 text-white px-10 py-4 rounded-xl shadow-lg hover:from-gray-700 hover:to-gray-900 transition-all font-semibold text-lg"
               >
                 Print Results
               </button>
