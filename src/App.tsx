@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
 import { Heart, User, Activity, Stethoscope, TrendingUp, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { predictHeartDisease } from "./utils/api"; // ✅ use your helper
+
+// Fix types for prediction
+interface PredictionResult {
+  riskLevel: string;
+  probability: number;
+  confidence: number;
+  recommendations: string[];
+}
 
 function App() {
   const [currentStep, setCurrentStep] = useState('input');
@@ -18,10 +27,29 @@ function App() {
     majorVessels: '',
     thalassemia: ''
   });
-  const [prediction, setPrediction] = useState(null);
+  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [processingProgress, setProcessingProgress] = useState(0);
 
-  const updateField = (field, value) => {
+  // Helper functions for mapping
+  const mapChestPain = (type: string): number => {
+    switch (type) {
+      case 'typical': return 0;
+      case 'atypical': return 1;
+      case 'non-anginal': return 2;
+      case 'asymptomatic': return 3;
+      default: return 0;
+    }
+  };
+  const mapThal = (thal: string): number => {
+    switch (thal) {
+      case 'normal': return 1;
+      case 'fixed-defect': return 2;
+      case 'reversible-defect': return 3;
+      default: return 1;
+    }
+  };
+
+  const updateField = (field: string, value: string) => {
     setPatientData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -29,60 +57,13 @@ function App() {
     return Object.entries(patientData).every(([key, value]) => value !== '');
   };
 
-  const simulatePrediction = () => {
-    setCurrentStep('processing');
-    setProcessingProgress(0);
-    const interval = setInterval(() => {
-      setProcessingProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          const riskFactors = calculateRiskFactors();
-          const mockPrediction = {
-            riskLevel: riskFactors > 0.6 ? 'high' : riskFactors > 0.3 ? 'moderate' : 'low',
-            probability: Math.min(0.95, Math.max(0.05, riskFactors + (Math.random() - 0.5) * 0.2)),
-            confidence: 0.85 + Math.random() * 0.1,
-            recommendations: generateRecommendations(riskFactors)
-          };
-          setPrediction(mockPrediction);
-          setCurrentStep('results');
-          return 100;
-        }
-        return prev + Math.random() * 20;
-      });
-    }, 150);
-  };
-
-  const calculateRiskFactors = () => {
-    let risk = 0;
-    const age = Number(patientData.age);
-    const restingBP = Number(patientData.restingBP);
-    const cholesterol = Number(patientData.cholesterol);
-    const majorVessels = Number(patientData.majorVessels);
-    if (age > 65) risk += 0.2;
-    else if (age > 55) risk += 0.1;
-    if (patientData.sex === 'male') risk += 0.1;
-    if (patientData.chestPainType === 'typical') risk += 0.3;
-    else if (patientData.chestPainType === 'atypical') risk += 0.2;
-    if (restingBP > 140) risk += 0.15;
-    else if (restingBP > 120) risk += 0.05;
-    if (cholesterol > 240) risk += 0.2;
-    else if (cholesterol > 200) risk += 0.1;
-    if (patientData.exerciseAngina === 'yes') risk += 0.25;
-    if (!isNaN(majorVessels) && majorVessels > 0) {
-      risk += majorVessels * 0.15;
-    }
-    if (patientData.thalassemia === 'reversible-defect') risk += 0.3;
-    else if (patientData.thalassemia === 'fixed-defect') risk += 0.2;
-    return Math.min(1, risk);
-  };
-
-  const generateRecommendations = (riskLevel) => {
-    const recommendations = [];
-    if (riskLevel > 0.6) {
+  const generateRecommendations = (probability: number): string[] => {
+    const recommendations: string[] = [];
+    if (probability > 0.6) {
       recommendations.push("Consult with a cardiologist immediately for comprehensive evaluation");
       recommendations.push("Consider cardiac stress testing and advanced imaging");
       recommendations.push("Implement strict dietary modifications and supervised exercise program");
-    } else if (riskLevel > 0.3) {
+    } else if (probability > 0.3) {
       recommendations.push("Schedule regular check-ups with your primary care physician");
       recommendations.push("Monitor blood pressure and cholesterol levels monthly");
       recommendations.push("Adopt heart-healthy lifestyle changes including diet and exercise");
@@ -94,6 +75,45 @@ function App() {
     recommendations.push("Avoid smoking and limit alcohol consumption");
     recommendations.push("Manage stress through relaxation techniques or counseling");
     return recommendations;
+  };
+
+  const makePrediction = async () => {
+    if (!isFormValid()) {
+      alert("Please fill in all fields.");
+      return;
+    }
+    setCurrentStep("processing");
+    try {
+      const input = {
+        age: Number(patientData.age),
+        sex: patientData.sex === "male" ? 1 : 0,
+        cp: mapChestPain(patientData.chestPainType),
+        trestbps: Number(patientData.restingBP),
+        chol: Number(patientData.cholesterol),
+        fbs: Number(patientData.fastingBS),
+        restecg: Number(patientData.restingECG),
+        thalach: Number(patientData.maxHeartRate),
+        exang: patientData.exerciseAngina === "yes" ? 1 : 0,
+        oldpeak: Number(patientData.oldpeak),
+        slope: Number(patientData.stSlope),
+        ca: Number(patientData.majorVessels),
+        thal: mapThal(patientData.thalassemia)
+      };
+
+      const result = await predictHeartDisease(input);
+
+      setPrediction({
+        riskLevel: result.prediction === 1 ? "high" : "low",
+        probability: result.probability,
+        confidence: result.probability,
+        recommendations: generateRecommendations(result.probability)
+      });
+      setCurrentStep("results");
+    } catch (err) {
+      console.error(err);
+      alert("Prediction failed: " + err);
+      setCurrentStep("input");
+    }
   };
 
   const resetAssessment = () => {
@@ -152,7 +172,7 @@ function App() {
   }
 
   if (currentStep === 'results' && prediction) {
-    const getRiskColor = (level) => {
+    const getRiskColor = (level: string) => {
       switch (level) {
         case 'low': return 'text-green-600 bg-green-50 border-green-200';
         case 'moderate': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
@@ -160,7 +180,7 @@ function App() {
         default: return 'text-gray-600 bg-gray-50 border-gray-200';
       }
     };
-    const getRiskIcon = (level) => {
+    const getRiskIcon = (level: string) => {
       switch (level) {
         case 'low': return <CheckCircle className="h-8 w-8" />;
         case 'moderate': return <AlertTriangle className="h-8 w-8" />;
@@ -202,7 +222,7 @@ function App() {
                 Personalized Recommendations
               </h3>
               <div className="space-y-5">
-                {prediction.recommendations.map((rec, index) => (
+                {prediction.recommendations.map((rec: string, index: number) => (
                   <div key={index} className="flex items-start space-x-3 p-5 bg-blue-50 rounded-xl shadow-sm hover:bg-blue-100 transition-colors">
                     <div className="flex-shrink-0 w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-base font-bold shadow-md">
                       {index + 1}
@@ -444,7 +464,7 @@ function App() {
             </div>
             <div className="mt-8 text-center">
               <button
-                onClick={simulatePrediction}
+                onClick={makePrediction}
                 disabled={!isFormValid()}
                 className={`px-12 py-4 rounded-xl font-semibold text-lg transition-all duration-200 ${
                   isFormValid()

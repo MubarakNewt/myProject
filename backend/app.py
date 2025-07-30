@@ -6,7 +6,9 @@ import joblib
 import os
 
 app = Flask(__name__)
-CORS(app, origins=["https://heart-disease-test.vercel.app"])
+CORS(app, origins=["https://heart-disease-test.vercel.app",
+    "http://localhost:5173"
+    ])
 
 # ✅ Base directory: this guarantees paths work inside Docker
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
